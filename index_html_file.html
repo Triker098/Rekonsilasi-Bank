@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aplikasi Rekonsiliasi Bank - Sistem Penyesuaian Saldo Bank dan Perusahaan">
+    <meta name="keywords" content="rekonsiliasi bank, akuntansi, saldo bank, penyesuaian">
+    <meta name="author" content="Bank Reconciliation App">
+    <title>Rekonsiliasi Bank - Aplikasi Penyesuaian Saldo</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .navigation {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .nav-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-step {
+            display: flex;
+            align-items: center;
+            color: #6c757d;
+            font-weight: 500;
+            padding: 10px 15px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-step.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .nav-step-number {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #dee2e6;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .nav-step.active .nav-step-number {
+            background: rgba(255,255,255,0.3);
+            color: white;
+        }
+
+        .content-area {
+            padding: 40px 30px;
+            min-height: 500px;
+        }
+
+        .step-content {
+            display: none;
+            animation: fadeIn 0.4s ease-in;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 18px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .currency-input {
+            position: relative;
+        }
+
+        .currency-input::before {
+            content: 'Rp';
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        .currency-input .form-input {
+            padding-left: 50px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 150px;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(135deg, #5a6268, #3d4246);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(135deg, #218838, #1dd1a1);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            justify-content: center;
+        }
+
+        .adjustment-section {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+
+        .section-title {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::before {
+            content: '•';
+            color: #667eea;
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+
+        .adjustment-item {
+            display: grid;
+            grid-template-columns: 2fr 120px 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: end;
+        }
+
+        .type-select {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            background: #f8f9fa;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .add-item-btn {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .add-item-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .final-summary {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .summary-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+        }
+
+        .balance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin: 25px 0;
+        }
+
+        .balance-item {
+            background: rgba(255,255,255,0.15);
+            padding: 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .balance-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .balance-amount {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .nav-steps {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .adjustment-item {
+                grid-template-columns: 1fr;
+            }
+            
+            .balance-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content-area {
+                padding: 20px 15px;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .btn, .navigation {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 Rekonsiliasi Bank</h1>
+            <p>Sistem Penyesuaian Saldo Bank dan Perusahaan</p>
+        </div>
+        
+        <div class="navigation">
+            <div class="nav-steps">
+                <div class="nav-step active" id="navStep1">
+                    <div class="nav-step-number">1</div>
+                    <span>Input Saldo Awal</span>
+                </div>
+                <div class="nav-step" id="navStep2">
+                    <div class="nav-step-number">2</div>
+                    <span>Penyesuaian</span>
+                </div>
+                <div class="nav-step" id="navStep3">
+                    <div class="nav-step-number">3</div>
+                    <span>Hasil Final</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <!-- STEP 1: Input Saldo -->
+            <div class="step-content active" id="stepContent1">
+                <div class="form-group">
+                    <label class="form-label">💼 Saldo Menurut Perusahaan:</label>
+                    <div class="currency-input">
+                        <input type="number" class="form-input" id="companyBalance" step="0.01" placeholder="0.00" autocomplete="off">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">🏦 Saldo Menurut Bank:</label>
+                    <div class="currency-input">
+                        <input type="number" class="form-input" id="bankBalance" step="0.01" placeholder="0.00" autocomplete="off">
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="goToAdjustment()">Lanjut ke Penyesuaian</button>
+                    <button class="btn btn-secondary" onclick="resetAll()">Reset Form</button>
+                </div>
+            </div>
+            
+            <!-- STEP 2: Penyesuaian -->
+            <div class="step-content" id="stepContent2">
+                <div class="adjustment-section">
+                    <h3 class="section-title">Penyesuaian Saldo Perusahaan</h3>
+                    <div id="companyAdjustments">
+                        <div class="adjustment-item">
+                            <input type="text" class="form-input desc-input" placeholder="Contoh: Setoran dalam perjalanan" autocomplete="off">
+                            <select class="type-select">
+                                <option value="add">Tambah (+)</option>
+                                <option value="subtract">Kurang (-)</option>
+                            </select>
+                            <div class="currency-input">
+                                <input type="number" class="form-input amount-input" step="0.01" placeholder="0.00" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                    <button class="add-item-btn" onclick="addCompanyRow()">+ Tambah Penyesuaian</button>
+                </div>
+                
+                <div class="adjustment-section">
+                    <h3 class="section-title">Penyesuaian Saldo Bank</h3>
+                    <div id="bankAdjustments">
+                        <div class="adjustment-item">
+                            <input type="text" class="form-input desc-input" placeholder="Contoh: Biaya administrasi" autocomplete="off">
+                            <select class="type-select">
+                                <option value="add">Tambah (+)</option>
+                                <option value="subtract">Kurang (-)</option>
+                            </select>
+                            <div class="currency-input">
+                                <input type="number" class="form-input amount-input" step="0.01" placeholder="0.00" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                    <button class="add-item-btn" onclick="addBankRow()">+ Tambah Penyesuaian</button>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="goToStep(1)">Kembali</button>
+                    <button class="btn btn-success" onclick="calculateResult()">Hitung Hasil</button>
+                </div>
+            </div>
+            
+            <!-- STEP 3: Hasil -->
+            <div class="step-content" id="stepContent3">
+                <div class="final-summary">
+                    <h2 class="summary-title">📊 Hasil Rekonsiliasi</h2>
+                    <div class="balance-grid">
+                        <div class="balance-item">
+                            <div class="balance-label">Saldo Perusahaan (Final)</div>
+                            <div class="balance-amount" id="finalCompany">Rp 0</div>
+                        </div>
+                        <div class="balance-item">
+                            <div class="balance-label">Saldo Bank (Final)</div>
+                            <div class="balance-amount" id="finalBank">Rp 0</div>
+                        </div>
+                    </div>
+                    <div id="reconciliationStatus"></div>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="goToStep(2)">Edit Penyesuaian</button>
+                    <button class="btn btn-primary" onclick="resetAll()">Rekonsiliasi Baru</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2025 Aplikasi Rekonsiliasi Bank | Dibuat dengan ❤️ untuk memudahkan pekerjaan Anda</p>
+    </div>
+
+    <script>
+        let initialBalances = {};
+
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function goToStep(stepNumber) {
+            // Hide all content
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active from all nav steps
+            document.querySelectorAll('.nav-step').forEach(nav => {
+                nav.classList.remove('active');
+            });
+            
+            // Show selected step
+            document.getElementById(`stepContent${stepNumber}`).classList.add('active');
+            document.getElementById(`navStep${stepNumber}`).classList.add('active');
+            
+            // Scroll to top smoothly
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goToAdjustment() {
+            const companyBalance = parseFloat(document.getElementById('companyBalance').value);
+            const bankBalance = parseFloat(document.getElementById('bankBalance').value);
+            
+            if (isNaN(companyBalance) || isNaN(bankBalance)) {
+                alert('⚠️ Mohon isi kedua nominal dengan benar!');
+                return;
+            }
+            
+            if (companyBalance < 0 || bankBalance < 0) {
+                alert('⚠️ Nominal tidak boleh negatif!');
+                return;
+            }
+            
+            initialBalances = {
+                company: companyBalance,
+                bank: bankBalance
+            };
+            
+            goToStep(2);
+        }
+
+        function addCompanyRow() {
+            const container = document.getElementById('companyAdjustments');
+            const newRow = document.createElement('div');
+            newRow.className = 'adjustment-item';
+            newRow.innerHTML = `
+                <input type="text" class="form-input desc-input" placeholder="Keterangan penyesuaian" autocomplete="off">
+                <select class="type-select">
+                    <option value="add">Tambah (+)</option>
+                    <option value="subtract">Kurang (-)</option>
+                </select>
+                <div class="currency-input">
+                    <input type="number" class="form-input amount-input" step="0.01" placeholder="0.00" autocomplete="off">
+                </div>
+            `;
+            container.appendChild(newRow);
+            
+            // Focus on the new description input
+            newRow.querySelector('.desc-input').focus();
+        }
+
+        function addBankRow() {
+            const container = document.getElementById('bankAdjustments');
+            const newRow = document.createElement('div');
+            newRow.className = 'adjustment-item';
+            newRow.innerHTML = `
+                <input type="text" class="form-input desc-input" placeholder="Keterangan penyesuaian" autocomplete="off">
+                <select class="type-select">
+                    <option value="add">Tambah (+)</option>
+                    <option value="subtract">Kurang (-)</option>
+                </select>
+                <div class="currency-input">
+                    <input type="number" class="form-input amount-input" step="0.01" placeholder="0.00" autocomplete="off">
+                </div>
+            `;
+            container.appendChild(newRow);
+            
+            // Focus on the new description input
+            newRow.querySelector('.desc-input').focus();
+        }
+
+        function getAdjustments(containerId) {
+            const container = document.getElementById(containerId);
+            const items = container.querySelectorAll('.adjustment-item');
+            const adjustments = [];
+            
+            items.forEach(item => {
+                const desc = item.querySelector('.desc-input').value.trim();
+                const type = item.querySelector('.type-select').value;
+                const amount = parseFloat(item.querySelector('.amount-input').value) || 0;
+                
+                if (desc && amount > 0) {
+                    adjustments.push({ desc, type, amount });
+                }
+            });
+            
+            return adjustments;
+        }
+
+        function calculateResult() {
+            const companyAdjs = getAdjustments('companyAdjustments');
+            const bankAdjs = getAdjustments('bankAdjustments');
+            
+            let finalCompany = initialBalances.company;
+            let finalBank = initialBalances.bank;
+            
+            // Apply company adjustments
+            companyAdjs.forEach(adj => {
+                if (adj.type === 'add') {
+                    finalCompany += adj.amount;
+                } else {
+                    finalCompany -= adj.amount;
+                }
+            });
+            
+            // Apply bank adjustments
+            bankAdjs.forEach(adj => {
+                if (adj.type === 'add') {
+                    finalBank += adj.amount;
+                } else {
+                    finalBank -= adj.amount;
+                }
+            });
+            
+            // Update display
+            document.getElementById('finalCompany').textContent = formatRupiah(finalCompany);
+            document.getElementById('finalBank').textContent = formatRupiah(finalBank);
+            
+            const difference = Math.abs(finalCompany - finalBank);
+            const statusDiv = document.getElementById('reconciliationStatus');
+            
+            if (difference < 1) {
+                statusDiv.innerHTML = `
+                    <div style="margin-top: 25px; padding: 20px; background: rgba(255,255,255,0.2); border-radius: 10px;">
+                        <h3 style="color: #fff; margin-bottom: 10px;">✅ REKONSILIASI BERHASIL!</h3>
+                        <p style="color: rgba(255,255,255,0.9);">Saldo perusahaan dan bank sudah seimbang.</p>
+                    </div>
+                `;
+            } else {
+                const isCompanyHigher = finalCompany > finalBank;
+                statusDiv.innerHTML = `
+                    <div style="margin-top: 25px; padding: 20px; background: rgba(255,255,255,0.2); border-radius: 10px;">
+                        <h3 style="color: #fff; margin-bottom: 10px;">⚠️ MASIH ADA SELISIH</h3>
+                        <p style="color: rgba(255,255,255,0.9);">Selisih: ${formatRupiah(difference)}</p>
+                        <p style="color: rgba(255,255,255,0.8); margin-top: 5px;">
+                            ${isCompanyHigher ? 'Saldo perusahaan lebih tinggi' : 'Saldo bank lebih tinggi'}
+                        </p>
+                    </div>
+                `;
+            }
+            
+            goToStep(3);
+        }
+
+        function resetAll() {
+            // Reset form inputs
+            document.getElementById('companyBalance').value = '';
+            document.getElementById('bankBalance').value = '';
+            
+            // Reset adjustments
+            document.getElementById('companyAdjustments').innerHTML = `
+                <div class="adjustment-item">
+                    <input type="text" class="form-input desc-input" placeholder="Contoh: Setoran dalam perjalanan" autocomplete="off">
+                    <select class="type-select">
+                        <option value="add">Tambah (+)</option>
+                        <option value="subtract">Kurang (-)</option>
+                    </select>
+                    <div class="currency-input">
+                        <input type="number" class="form-input amount-input" step="0.01" placeholder="0.00" autocomplete="off">
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('bankAdjustments').innerHTML = `
+                <div class="adjustment-item">
+                    <input type="text" class="form-input desc-input" placeholder="Contoh: Biaya administrasi" autocomplete="off">
+                    <select class="type-select">
+                        <option value="add">Tambah (+)</option>
+                        <option value="subtract">Kurang (-)</option>
+                    </select>
+                    <div class="currency-input">
+                        <input type="number" class="form-input amount-input" step="0.01" placeholder="0.00" autocomplete="off">
+                    </div>
+                </div>
+            `;
+            
+            // Reset to first step
+            initialBalances = {};
+            goToStep(1);
+            
+            // Focus on first input
+            setTimeout(() => {
+                document.getElementById('companyBalance').focus();
+            }, 100);
+        }
+
+        // Auto-format number input untuk kemudahan
+        document.addEventListener('input', function(e) {
+            if (e.target.type === 'number') {
+                // Remove any non-numeric characters except decimal point
+                let value = e.target.value.replace(/[^0-9.]/g, '');
+                
+                // Ensure only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                
+                e.target.value = value;
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Enter key to proceed
+            if (e.key === 'Enter') {
+                const activeStep = document.querySelector('.step-content.active');
+                if (activeStep.id === 'stepContent1') {
+                    goToAdjustment();
+                } else if (activeStep.id === 'stepContent2') {
+                    calculateResult();
+                }
+            }
+            
+            // Escape key to reset
+            if (e.key === 'Escape') {
+                if (confirm('Apakah Anda yakin ingin me-reset form?')) {
+                    resetAll();
+                }
+            }
+        });
+
+        // Load state from localStorage if available
+        window.addEventListener('load', function() {
+            try {
+                const saved = localStorage.getItem('bankReconciliation');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data.companyBalance) {
+                        document.getElementById('companyBalance').value = data.companyBalance;
+                    }
+                    if (data.bankBalance) {
+                        document.getElementById('bankBalance').value = data.bankBalance;
+                    }
+                }
+            } catch (e) {
+                // Ignore localStorage errors
+                console.log('LocalStorage not available');
+            }
+        });
+
+        // Save state to localStorage
+        function saveState() {
+            try {
+                const data = {
+                    companyBalance: document.getElementById('companyBalance').value,
+                    bankBalance: document.getElementById('bankBalance').value,
+                    timestamp: new Date().getTime()
+                };
+                localStorage.setItem('bankReconciliation', JSON.stringify(data));
+            } catch (e) {
+                // Ignore localStorage errors
+                console.log('LocalStorage not available');
+            }
+        }
+
+        // Auto-save on input
+        document.addEventListener('input', saveState);
+    </script>
+</body>
+</html>
